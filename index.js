@@ -100,6 +100,19 @@ async function run() {
       let result = await queries.findOne(filter);
       res.send(result);
     });
+
+    //get queries according to user email
+    app.post("/my-queries", verifyToken, async (req, res) => {
+      let email = req.body;
+      let query = email;
+      //console.log(req.user.email, email.email);
+      if (req.user.email != email.email) {
+        return res.status(401).send({ messege: "Unauthorized access" });
+      }
+      let options = { sort: { date: -1 } };
+      result = await queries.find(query, options).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
