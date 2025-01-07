@@ -62,6 +62,28 @@ async function run() {
       }
       res.send(result);
     });
+
+    //post queries
+    app.post("/queries", verifyToken, async (req, res) => {
+      let query = req.body.formData;
+      if (query.email != req.user.email) {
+        return res.status(401).send({ messege: "Unauthorized access" });
+      }
+      let result = await queries.insertOne(query);
+
+      res.send(result);
+    });
+
+    //update queries
+    app.put("/update-query/:id", async (req, res) => {
+      let query = req.body;
+      let filter = { _id: new ObjectId(req.params.id) };
+      let updatedQuery = {
+        $set: query,
+      };
+      let result = await queries.updateOne(filter, updatedQuery);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
