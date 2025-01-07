@@ -124,6 +124,15 @@ async function run() {
       let result = await recommendations.find(filter).toArray();
       res.send(result);
     });
+
+    //get others recommendations for me
+    app.get("/recommended-for-me/:email", async (req, res) => {
+      let email = req.params.email;
+      let filter = { userEmail: email };
+
+      let result = await recommendations.find(filter).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
