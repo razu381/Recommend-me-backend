@@ -6,6 +6,21 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
 
+function verifyToken(req, res, next) {
+  let token = req?.cookies.token;
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized access" });
+    }
+
+    req.user = decoded;
+    next();
+  });
+}
+
 app.use(express.json());
 app.use(
   cors({
@@ -124,7 +139,6 @@ async function run() {
       let result = await recommendations.find(filter).toArray();
       res.send(result);
     });
-
     //get others recommendations for me
     app.get("/recommended-for-me/:email", async (req, res) => {
       let email = req.params.email;
@@ -132,6 +146,28 @@ async function run() {
 
       let result = await recommendations.find(filter).toArray();
       res.send(result);
+    });
+    //delete recommendation
+    app.delete("/recommendations/:id", async (req, res) => {
+      let id = req.params.id;
+      let filter = { _id: new ObjectId(id) };
+
+      let result = await recommendations.deleteOne(filter);
+      res.send(result);
+    });
+
+    // -------------------- JWT TOKEN ------------------
+    app.post("/jwt", async (req, res) => {
+      let email = req.body;
+      //console.log(email);
+      let token = jwt.sign(email, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
     });
   } finally {
     // Ensures that the client will close when you finish/error
