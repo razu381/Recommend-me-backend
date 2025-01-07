@@ -6,21 +6,6 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
 
-function verifyToken(req, res, next) {
-  let token = req?.cookies.token;
-  if (!token) {
-    return res.status(401).send({ message: "Unauthorized access" });
-  }
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "Unauthorized access" });
-    }
-
-    req.user = decoded;
-    next();
-  });
-}
-
 app.use(express.json());
 app.use(
   cors({
@@ -111,6 +96,24 @@ async function run() {
       }
       let options = { sort: { date: -1 } };
       result = await queries.find(query, options).toArray();
+      res.send(result);
+    });
+
+    // ------------Recommendations starts from here------------------
+    //get all recommendations by query id
+    app.get("/recommendations/:id", async (req, res) => {
+      let queryId = req.params.id;
+      let filter = { queryId: queryId };
+
+      let result = await recommendations.find(filter).toArray();
+      res.send(result);
+    });
+    //post recommendations
+    app.post("/recommendations", async (req, res) => {
+      let recommendation = req.body;
+
+      let result = await recommendations.insertOne(recommendation);
+
       res.send(result);
     });
   } finally {
