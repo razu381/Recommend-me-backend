@@ -84,6 +84,22 @@ async function run() {
       let result = await queries.updateOne(filter, updatedQuery);
       res.send(result);
     });
+
+    //delete query
+    app.delete("/my-queries/:id", async (req, res) => {
+      let id = req.params.id;
+      let filter = { _id: new ObjectId(id) };
+      let result = await queries.deleteOne(filter);
+      res.send(result);
+    });
+
+    //get single query
+    app.get("/queries/:id", async (req, res) => {
+      let id = req.params.id;
+      let filter = { _id: new ObjectId(id) };
+      let result = await queries.findOne(filter);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
