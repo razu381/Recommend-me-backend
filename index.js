@@ -76,6 +76,16 @@ async function run() {
 
       res.send(result);
     });
+    //search queries
+    app.get("/search", async (req, res) => {
+      let query = req.query.q;
+      let filter = {
+        productName: { $regex: query, $options: "i" },
+      };
+      let result = await queries.find(filter).toArray();
+
+      res.send(result);
+    });
 
     //update queries
     app.put("/update-query/:id", async (req, res) => {
@@ -168,6 +178,8 @@ async function run() {
       console.log(recommendation.queryId);
 
       let result = await recommendations.deleteOne(filter);
+
+      //decrease the recommendation count
       if (result.deletedCount === 1) {
         let queryFilter = { _id: new ObjectId(recommendation.queryId) };
         let update = { $inc: { recommendationCount: -1 } };
