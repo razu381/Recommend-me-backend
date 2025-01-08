@@ -1,5 +1,5 @@
-const express = require("express");
 require("dotenv").config();
+const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
@@ -45,13 +45,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    //await client.connect();
     // Get the database and collection on which to run the operation
     const database = client.db("recommendme");
     const queries = database.collection("queries");
     const recommendations = database.collection("recommendations");
-
-    console.log("HI");
 
     //get queries all and limited
     app.get("/queries", async (req, res) => {
@@ -141,14 +139,12 @@ async function run() {
     //post recommendations
     app.post("/recommendations", async (req, res) => {
       let recommendation = req.body;
-      console.log(recommendation.queryId);
       let result = await recommendations.insertOne(recommendation);
       if (result.insertedId) {
         let queryFilter = { _id: new ObjectId(recommendation.queryId) };
         let update = { $inc: { recommendationCount: 1 } };
 
         let incrememntResult = await queries.updateOne(queryFilter, update);
-        console.log(incrememntResult);
       }
 
       res.send(result);
@@ -175,7 +171,6 @@ async function run() {
       let filter = { _id: new ObjectId(id) };
 
       let recommendation = await recommendations.findOne(filter);
-      console.log(recommendation.queryId);
 
       let result = await recommendations.deleteOne(filter);
 
@@ -185,7 +180,6 @@ async function run() {
         let update = { $inc: { recommendationCount: -1 } };
 
         let decrememntResult = await queries.updateOne(queryFilter, update);
-        console.log("decrement result : ", decrememntResult);
       }
 
       res.send(result);
@@ -200,43 +194,23 @@ async function run() {
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          path: "/",
         })
         .send({ success: true });
     });
 
-    // -------------------Test field starts from here ----------------
-    // let queryIds = [];
-    // result11 = await queries.find({}, { projection: { _id: 1 } }).toArray();
-    // queryIds = result11.map((result1) => result1._id.toString());
-
-    // let reccomCounts = [];
-    // for (let id of queryIds) {
-    //   let reccount = await recommendations.countDocuments({ queryId: id });
-    //   reccomCounts.push({
-    //     id: id,
-    //     count: reccount,
-    //   });
-    // }
-    // console.log(reccomCounts);
-
-    // //go to each query and set the count
-
-    // for (let item of reccomCounts) {
-    //   let updatedCount = {
-    //     $set: {
-    //       recommendationCount: item.count,
-    //     },
-    //   };
-    //   let newQuery = await queries.updateOne(
-    //     { _id: new ObjectId(item.id) },
-    //     updatedCount,
-    //     { upsert: false }
-    //   );
-    //   console.log("newQuery", newQuery);
-    // }
-
-    // ------------playground ends here--------------------
+    app.post("/deleteCookieOnLogOut", async (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          path: "/",
+        })
+        .send({ RemoveToken: true });
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
