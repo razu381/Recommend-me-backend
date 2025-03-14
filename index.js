@@ -56,6 +56,10 @@ async function run() {
       try {
         let limit = parseInt(req.query.limit) || 0;
 
+        if (isNaN(limit) || limit < 0) {
+          return sendError(res, 400, "Invalid limit parameter");
+        }
+
         let result;
         if (limit > 0) {
           result = await queries.find().limit(limit).toArray();
@@ -71,13 +75,18 @@ async function run() {
 
     //post queries
     app.post("/queries", verifyToken, async (req, res) => {
-      let query = req.body.formData;
-      if (query.email != req.user.email) {
-        return res.status(401).send({ messege: "Unauthorized access" });
-      }
-      let result = await queries.insertOne(query);
+      try {
+        let query = req.body.formData;
+        if (query.email != req.user.email) {
+          return res.status(401).send({ messege: "Unauthorized access" });
+        }
+        let result = await queries.insertOne(query);
 
-      res.send(result);
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching query:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
     });
     //search queries
     app.get("/search", async (req, res) => {
