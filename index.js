@@ -24,7 +24,7 @@ function verifyToken(req, res, next) {
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://recommendme-35a11.web.app"],
     credentials: true,
   })
 );
@@ -53,15 +53,20 @@ async function run() {
 
     //get queries all and limited
     app.get("/queries", async (req, res) => {
-      let limit = parseInt(req.query.limit) || 0;
+      try {
+        let limit = parseInt(req.query.limit) || 0;
 
-      let result;
-      if (limit > 0) {
-        result = await queries.find().limit(limit).toArray();
-      } else {
-        result = await queries.find().toArray();
+        let result;
+        if (limit > 0) {
+          result = await queries.find().limit(limit).toArray();
+        } else {
+          result = await queries.find().toArray();
+        }
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching query:", error);
+        res.status(500).send({ message: "Internal server error" });
       }
-      res.send(result);
     });
 
     //post queries
